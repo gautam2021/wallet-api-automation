@@ -1,5 +1,7 @@
 package com.gautam.wallet.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -7,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.gautam.wallet.dto.TransferRequest;
 import com.gautam.wallet.entity.Transfer;
 import com.gautam.wallet.entity.Wallet;
+import com.gautam.wallet.exception.InsufficientBalanceException;
 import com.gautam.wallet.repository.TransferRepository;
 import com.gautam.wallet.repository.WalletRepository;
 
@@ -22,39 +25,56 @@ public class TransferService {
     @Transactional
     public Transfer transferMoney(TransferRequest request) {
 
-	    Wallet sourceWallet =
-	            walletRepository.findById(request.getSourceWalletId()).orElse(null);
+        // Idempotency
+        Optional<Transfer> existing =
+                transferRepository.findByReference(request.getReference());
 
-	    Wallet destinationWallet =
-	            walletRepository.findById(request.getDestinationWalletId()).orElse(null);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
 
-	    if (sourceWallet == null || destinationWallet == null) {
-	        throw new RuntimeException("Wallet not found");
-	    }
+        // Validation
+        if (request.getAmount() <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
 
-	    if (sourceWallet.getBalance() < request.getAmount()) {
-	        throw new RuntimeException("Insufficient Balance");
-	    }
+        if (request.getSourceWalletId().equals(request.getDestinationWalletId())) {
+            throw new IllegalArgumentException("Source and Destination wallet cannot be the same");
+        }
 
-	    sourceWallet.setBalance(
-	            sourceWallet.getBalance() - request.getAmount());
+        Wallet sourceWallet =
+                walletRepository.findById(request.getSourceWalletId()).orElse(null);
 
-	    destinationWallet.setBalance(
-	            destinationWallet.getBalance() + request.getAmount());
+        Wallet destinationWallet =
+                walletRepository.findById(request.getDestinationWalletId()).orElse(null);
 
-	    walletRepository.save(sourceWallet);
+        if (sourceWallet == null || destinationWallet == null) {
+            throw new IllegalArgumentException("Wallet not found");
+        }
 
-	    walletRepository.save(destinationWallet);
+        if (sourceWallet.getBalance() < request.getAmount()) {
+            throw new InsufficientBalanceException("Insufficient Balance");
+        }
 
-	    Transfer transfer = new Transfer(
-		        request.getSourceWalletId(),
-		        request.getDestinationWalletId(),
-		        request.getAmount(),
-		        request.getReference(),
-		        "SUCCESS");
+        sourceWallet.setBalance(
+                sourceWallet.getBalance() - request.getAmount());
 
-	    transferRepository.save(transfer);
+        destinationWallet.setBalance(
+                destinationWallet.getBalance() + request.getAmount());
 
-	    return transfer;
-	}
+        walletRepository.save(sourceWallet);
+        walletRepository.save(destinationWallet);
+
+        Transfer transfer =
+                new Transfer(
+                        request.getSourceWalletId(),
+                        request.getDestinationWalletId(),
+                        request.getAmount(),
+                        request.getReference(),
+                        "SUCCESS");
+
+        transferRepository.save(transfer);
+
+        return transfer;
+    }
 }

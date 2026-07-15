@@ -17,7 +17,7 @@ public class TransferController {
     @PostMapping
     public Transfer transferMoney(@RequestBody TransferRequest request) {
 
-        return transferService.transferMoney(request);
+       return transferService.transferMoney(request);
 
     }
 }
