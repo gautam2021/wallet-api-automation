@@ -1,170 +1,182 @@
-# Wallet Transfer Service - SDET Assignment
+# Wallet Transfer Service - Test Strategy
 
-## Overview
+## Objective
 
-This project demonstrates an end-to-end automation testing solution for a Wallet Transfer Service.
-
-The automation validates the complete flow from API request to database persistence while ensuring business rules such as balance consistency, duplicate transfer handling, and validation failures.
+The objective of this automation suite is to validate the Wallet Transfer Service across multiple layers, ensuring correctness of API behavior, business workflow, database persistence, and reliability.
 
 ---
 
-# Technology Stack
+# Test Levels Covered
 
-- Java 25
-- Spring Boot 3.x
-- Maven
-- Rest Assured
-- JUnit 5
-- MySQL
-- JDBC
+## 1. API Validation
 
----
-
-# Project Structure
-
-```
-gautam2021
-│
-├── wallet-service
-│      Spring Boot REST API
-│
-├── wallet-transfer-tests
-│      BaseTest
-│      WalletClient
-│      DatabaseUtils
-│      WalletTransferTest
-│
-└── README.md
-```
-
----
-
-# Test Coverage
-
-## API Validation
+The following API scenarios are automated:
 
 - Successful wallet transfer
 - Insufficient balance
 - Negative amount validation
-- Same source and destination wallet validation
-- Wallet not found validation
-- Duplicate transfer validation
+- Same source and destination wallet
+- Wallet not found
+- Duplicate transfer request
+
+Validation includes:
+
+- HTTP status codes
+- Response payload
+- Error messages
+- Business status
 
 ---
 
-## Database Validation
+## 2. Business Workflow Validation
 
-The automation validates:
+The automation validates the following business rules:
 
-- Source wallet balance
-- Destination wallet balance
-- Transfer status
-- Transfer persistence
-
----
-
-## Business Workflow Validation
-
-The following business rules are verified:
-
-- Source wallet debited once
-- Destination wallet credited once
-- Transfer status is SUCCESS
-- Failed transfers do not modify balances
-- Duplicate requests do not create duplicate transfers
+- Source wallet is debited once
+- Destination wallet is credited once
+- Successful transfer is persisted
+- Failed transfer does not update balances
+- Duplicate transfer does not create duplicate side effects
 
 ---
 
-## Reliability Testing
+## 3. Database Validation
 
-Implemented:
+The following database validations are performed using JDBC.
 
-- Duplicate transfer validation
-- Basic concurrent transfer validation using Java Threads
+### Wallet Table
 
----
+Validated fields:
 
-## Project Architecture
+- Balance
 
-### wallet-service
+### Transfer Table
 
-Contains the Spring Boot REST service.
+Validated fields:
 
-### wallet-transfer-tests
+- Reference
+- Status
 
-Contains
-
-- BaseTest
-- WalletClient
-- DatabaseUtils
-- API Test Suite
+The database state is compared with the API response to ensure consistency.
 
 ---
 
-# Running the Application
+# Test Architecture
 
-Start MySQL.
+The automation framework follows a layered design.
 
-Run the Wallet Service.
-
-```bash
-cd wallet-service
-
-mvn spring-boot:run
+```
+Tests
+   │
+   ▼
+WalletClient
+   │
+   ▼
+REST API
+   │
+   ▼
+Wallet Service
+   │
+   ▼
+MySQL Database
 ```
 
+### BaseTest
+
+Responsible for RestAssured configuration.
+
+### WalletClient
+
+Encapsulates API requests.
+
+### DatabaseUtils
+
+Performs database validation.
+
+### WalletTransferTest
+
+Contains business scenarios.
+
 ---
 
-# Running Tests
+# Test Data Management
 
-```bash
-cd wallet-transfer-tests
+Before every test:
 
-mvn clean test
-```
+- Wallet 1 balance is reset to 10000
+- Wallet 2 balance is reset to 5000
+
+Each transfer uses a unique transaction reference generated using the current timestamp to avoid duplicate execution across test runs.
+
+---
+
+# Reliability Testing
+
+## Duplicate Transfer
+
+The same transfer request is submitted twice.
+
+Expected outcome:
+
+- Money is transferred once
+- One transfer record exists
+- No duplicate debit
+- No duplicate credit
+
+---
+
+## Concurrent Transfer
+
+Two concurrent transfer requests are executed using Java Threads.
+
+Validated conditions:
+
+- Source balance never becomes negative
+- Destination balance never exceeds one successful transfer
 
 ---
 
 # Assumptions
 
-- MySQL database is running locally.
+The following assumptions were made:
+
+- Transfer reference acts as the idempotency identifier.
 - Wallet data is pre-seeded.
-- Transfer Reference is used as the idempotency identifier.
-- Database is reset before every test execution.
+- Local MySQL database is available.
+- Application is running locally.
 
 ---
 
-# Known Limitations
+# Out of Scope
 
-The sample Wallet Service does not implement:
+The sample application does not include:
 
 - Kafka
 - RabbitMQ
 - Outbox Pattern
-- Audit Table
+- Audit/Event Tables
 - Event Publishing
-- Idempotency-Key HTTP Header
+- Distributed Transactions
 
-Therefore, these validations are documented but considered out of scope for this assignment.
+Therefore, these validations are documented but not automated.
 
 ---
 
 # Future Improvements
 
-Given additional time, the following enhancements could be added:
+With additional implementation time, the following improvements could be added:
 
 - TestContainers
-- Docker Compose
-- GitHub Actions CI
+- Dockerized execution
+- GitHub Actions CI/CD
 - API Contract Testing
 - Performance Testing
-- Audit/Event Validation
-- Message Queue Validation
+- Security Testing
+- Kafka Event Validation
+- Audit Trail Validation
 
 ---
 
-# Author
+# Summary
 
-**Mohit Kumar Gautam**
-
-Software Development Engineer in Test (SDET) Assignment
+This automation suite validates the Wallet Transfer Service from API to database while covering business rules, reliability scenarios, duplicate handling, and concurrency. The framework is designed to be modular, maintainable, and easily extensible for future enhancements.

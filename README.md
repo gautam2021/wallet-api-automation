@@ -2,78 +2,122 @@
 
 ## Overview
 
-This project demonstrates an end-to-end automation testing solution for a Wallet Transfer Service using Java, Spring Boot, Rest Assured, JUnit 5, and MySQL.
+This project demonstrates an end-to-end automation testing solution for a Wallet Transfer Service.
 
-The solution validates API responses, business workflows, database state, idempotency behavior, and basic concurrency scenarios.
+The automation validates the complete flow from API request to database persistence while ensuring business rules such as balance consistency, duplicate transfer handling, and validation failures.
 
 ---
 
-## Tech Stack
+# Technology Stack
 
 - Java 25
-- Spring Boot 3
-- JUnit 5
-- Rest Assured
+- Spring Boot 3.x
 - Maven
+- Rest Assured
+- JUnit 5
 - MySQL
 - JDBC
 
 ---
 
-## Project Structure
+# Project Structure
 
 ```
-wallet-service/
-    Spring Boot Wallet API
-
-wallet-transfer-tests/
-    API Automation
-    Database Validation
-    Test Utilities
+gautam2021
+│
+├── wallet-service
+│      Spring Boot REST API
+│
+├── wallet-transfer-tests
+│      BaseTest
+│      WalletClient
+│      DatabaseUtils
+│      WalletTransferTest
+│
+└── README.md
 ```
 
 ---
 
-## Test Coverage
+# Test Coverage
 
-### API Validation
+## API Validation
 
-- Successful money transfer
+- Successful wallet transfer
 - Insufficient balance
-- Negative amount
-- Same source and destination wallet
-- Wallet not found
-- Duplicate transfer
+- Negative amount validation
+- Same source and destination wallet validation
+- Wallet not found validation
+- Duplicate transfer validation
 
-### Database Validation
+---
+
+## Database Validation
+
+The automation validates:
 
 - Source wallet balance
 - Destination wallet balance
 - Transfer status
-- Balance consistency
-
-### Reliability
-
-- Duplicate request handling
-- Basic concurrent transfer validation
+- Transfer persistence
 
 ---
 
-## Running the Application
+## Business Workflow Validation
+
+The following business rules are verified:
+
+- Source wallet debited once
+- Destination wallet credited once
+- Transfer status is SUCCESS
+- Failed transfers do not modify balances
+- Duplicate requests do not create duplicate transfers
+
+---
+
+## Reliability Testing
+
+Implemented:
+
+- Duplicate transfer validation
+- Basic concurrent transfer validation using Java Threads
+
+---
+
+## Project Architecture
+
+### wallet-service
+
+Contains the Spring Boot REST service.
+
+### wallet-transfer-tests
+
+Contains
+
+- BaseTest
+- WalletClient
+- DatabaseUtils
+- API Test Suite
+
+---
+
+# Running the Application
 
 Start MySQL.
 
-Run the Wallet Service
+Run the Wallet Service.
 
-```
+```bash
+cd wallet-service
+
 mvn spring-boot:run
 ```
 
 ---
 
-## Running Tests
+# Running Tests
 
-```
+```bash
 cd wallet-transfer-tests
 
 mvn clean test
@@ -81,29 +125,46 @@ mvn clean test
 
 ---
 
-## Assumptions
+# Assumptions
 
-- MySQL is running locally.
-- Wallets are pre-seeded.
-- Transfer reference acts as the idempotency key.
-- No external messaging or audit service exists.
+- MySQL database is running locally.
+- Wallet data is pre-seeded.
+- Transfer Reference is used as the idempotency identifier.
+- Database is reset before every test execution.
 
 ---
 
-## Known Limitations
+# Known Limitations
 
-The sample application does not include:
+The sample Wallet Service does not implement:
 
 - Kafka
 - RabbitMQ
-- Audit Table
 - Outbox Pattern
+- Audit Table
 - Event Publishing
+- Idempotency-Key HTTP Header
 
-Therefore those validations are documented but out of scope.
+Therefore, these validations are documented but considered out of scope for this assignment.
 
 ---
 
-## Author
+# Future Improvements
 
-Mohit Kumar Gautam
+Given additional time, the following enhancements could be added:
+
+- TestContainers
+- Docker Compose
+- GitHub Actions CI
+- API Contract Testing
+- Performance Testing
+- Audit/Event Validation
+- Message Queue Validation
+
+---
+
+# Author
+
+**Mohit Kumar Gautam**
+
+Software Development Engineer in Test (SDET) Assignment

@@ -1,0 +1,58 @@
+name: Wallet Transfer CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+
+  build-wallet-service:
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: wallet-service
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build Wallet Service
+        run: mvn clean package -DskipTests
+
+  wallet-transfer-tests:
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: wallet-transfer-tests/wallet-transfer-tests
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Run Tests
+        run: mvn test
